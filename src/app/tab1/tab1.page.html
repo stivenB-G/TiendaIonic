@@ -1,15 +1,43 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title> Tab 1 </ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 1</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <app-explore-container name="Tab 1 page"></app-explore-container>
+﻿<ion-header
+  ><ion-toolbar><ion-title>Evidencias de entrega</ion-title></ion-toolbar></ion-header
+>
+<ion-content>
+  <main class="gallery">
+    <div class="intro">
+      <a routerLink="/tabs/pedidos">← Volver a pedidos</a>
+      <p class="eyebrow">LOGÍSTICA NEXO</p>
+      <h1>Evidencias de entrega</h1>
+      <p>Las fotografías se conservan únicamente en este dispositivo. No se sincronizan con Supabase.</p>
+      @if (orderId()) {
+      <p>Pedido asociado: {{ orderId() }}</p>
+      }
+      <ion-button (click)="takePhoto()" [disabled]="busy() || !ready()"
+        >{{ busy() ? 'Procesando…' : 'Tomar fotografía' }}</ion-button
+      >
+    </div>
+    @if (message()) {
+    <p class="message" role="status">{{ message() }}</p>
+    }
+    <h2>Archivo local · {{ gallery.photos().length }}</h2>
+    @if (!busy() && ready() && gallery.photos().length === 0) {
+    <div class="empty">
+      <h3>Aún no hay evidencias</h3>
+      <p>Toca «Tomar fotografía» para registrar una entrega.</p>
+    </div>
+    }
+    <div class="photos">
+      @for (photo of gallery.photos(); track photo.filepath) {
+      <figure>
+        <img
+          [src]="photo.webviewPath"
+          [alt]="'Fotografía del ' + (photo.createdAt | date:'dd/MM/yyyy HH:mm')"
+          loading="lazy"
+        />
+        <figcaption>
+          {{ photo.createdAt | date:'dd/MM/yyyy · HH:mm' }} @if (photo.orderId) { <br />Pedido: {{ photo.orderId }} }
+        </figcaption>
+      </figure>
+      }
+    </div>
+  </main>
 </ion-content>

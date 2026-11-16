@@ -6,10 +6,16 @@ import {
   withPreloading,
   PreloadAllModules,
 } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular';
+import { defineCustomElements } from '@ionic/pwa-elements/loader';
 
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
+
+if (!Capacitor.isNativePlatform()) {
+  defineCustomElements(window);
+}
 
 bootstrapApplication(AppComponent, {
   providers: [

@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = 'http://localhost:4200';
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4200';
 
 export default defineConfig({
   testDir: './e2e',
@@ -10,6 +10,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL,
+    channel: process.env.PLAYWRIGHT_CHANNEL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -18,10 +19,12 @@ export default defineConfig({
       use: { ...devices['Pixel 7'] },
     },
   ],
-  webServer: {
-    command: 'npm start -- --port 4200',
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: 'npm start -- --port 4200',
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 });

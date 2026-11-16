@@ -1,5 +1,7 @@
 import type { Routes } from '@angular/router';
 
+import { adminGuard, customerGuard, operatorGuard } from '../services/shop.guard';
+
 import { TabsPage } from './tabs.page';
 
 export const routes: Routes = [
@@ -8,27 +10,31 @@ export const routes: Routes = [
     component: TabsPage,
     children: [
       {
-        path: 'tab1',
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadComponent: () => import('../admin/admin.page').then((m) => m.AdminPage),
+      },
+      ...['tienda', 'carrito', 'cuenta', 'pedidos'].map((view) => ({
+        path: view,
+        data: { view },
+        ...(view === 'pedidos' ? { canActivate: [customerGuard] } : {}),
+        loadComponent: () => import('../store/store.page').then((m) => m.StorePage),
+      })),
+      {
+        path: 'evidencias',
+        canActivate: [operatorGuard],
         loadComponent: () => import('../tab1/tab1.page').then((m) => m.Tab1Page),
       },
       {
-        path: 'tab2',
-        loadComponent: () => import('../tab2/tab2.page').then((m) => m.Tab2Page),
-      },
-      {
-        path: 'tab3',
-        loadComponent: () => import('../tab3/tab3.page').then((m) => m.Tab3Page),
-      },
-      {
         path: '',
-        redirectTo: '/tabs/tab1',
+        redirectTo: '/tabs/tienda',
         pathMatch: 'full',
       },
     ],
   },
   {
     path: '',
-    redirectTo: '/tabs/tab1',
+    redirectTo: '/tabs/tienda',
     pathMatch: 'full',
   },
 ];

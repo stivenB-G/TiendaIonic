@@ -1,9 +1,9 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+﻿import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'galeria-fotos',
-  webDir: 'www'
+  appId: 'com.actividad.galeriafotos',
+  appName: 'Nexo Tienda',
+  webDir: 'www',
 };
 
 export default config;

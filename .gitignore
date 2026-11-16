@@ -31,6 +31,7 @@ log.txt
 
 # Node
 /node_modules
+/.gradle-project/
 npm-debug.log
 yarn-error.log
 
@@ -74,3 +75,6 @@ Thumbs.db
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Junie AI
+/.junie/

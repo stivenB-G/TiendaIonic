@@ -1,0 +1,186 @@
+<ion-header class="ion-no-border"
+  ><ion-toolbar
+    ><ion-title>Administración · Nexo</ion-title
+    ><a slot="end" class="back-link" routerLink="/tabs/tienda">Ver tienda ↗</a></ion-toolbar
+  ></ion-header
+>
+<ion-content>
+  @if (auth.admin()) {
+  <main class="admin-shell">
+    <p class="eyebrow">TU CATÁLOGO, A TU MANERA</p>
+    <h1>Gestiona tus productos</h1>
+    <p class="subtitle">Agrega una foto, completa los detalles y publica tu próximo favorito.</p>
+    @if (auth.demo) {
+    <p class="notice">Administración de demostración. Los productos y sus fotos se guardan en este dispositivo.</p>
+    } @if (notice()) {
+    <p class="notice" role="status">{{ notice() }}</p>
+    }
+    <div class="admin-layout">
+      <section id="product-editor" class="editor" aria-label="Editor de producto">
+        <div class="heading">
+          <h2>{{ editing() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+          @if (editing()) {<button type="button" class="text-button" (click)="reset()" [disabled]="busy()">
+            Cancelar edición</button
+          >}
+        </div>
+        <form #productForm="ngForm" (ngSubmit)="save()">
+          <fieldset [disabled]="busy()">
+            <div class="photo-preview" [style.background]="draft.color">
+              @if (preview()) {
+              <img [src]="preview()" alt="Vista previa de la fotografía del producto" (error)="photoFailed()" /> } @else
+              {
+              <div>
+                <span aria-hidden="true">＋</span>
+                <p>La foto hace la diferencia</p>
+                <small>Elige una imagen clara de tu producto</small>
+              </div>
+              }
+            </div>
+            <label for="product-photo">{{ editing() ? 'Cambiar fotografía' : 'Fotografía del producto *' }}</label>
+            <input
+              #photoInput
+              id="product-photo"
+              name="photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="selectPhoto($event)"
+              aria-describedby="photo-help photo-error"
+            />
+            <small id="photo-help"
+              >JPG, PNG o WebP · Máximo 5 MB. Se mostrará en el catálogo, el detalle y el carrito.</small
+            >
+            <p id="photo-error" class="error" role="alert">{{ photoError() }}</p>
+            <label for="product-name">Nombre *</label>
+            <input
+              id="product-name"
+              name="name"
+              [(ngModel)]="draft.name"
+              required
+              maxlength="100"
+              placeholder="Ej. Mochila de viaje"
+            />
+            <label for="product-category">Categoría *</label>
+            <input
+              id="product-category"
+              name="category"
+              [(ngModel)]="draft.category"
+              required
+              maxlength="60"
+              list="product-categories"
+              placeholder="Ej. Accesorios"
+            />
+            <datalist id="product-categories">
+              <option value="Accesorios"></option>
+              <option value="Tecnología"></option>
+              <option value="Hogar"></option>
+            </datalist>
+            <label for="product-description">Descripción *</label>
+            <textarea
+              id="product-description"
+              name="description"
+              [(ngModel)]="draft.description"
+              required
+              maxlength="2000"
+              rows="4"
+              placeholder="Materiales, características, medidas y lo que lo hace especial…"
+            ></textarea>
+            <div class="fields-row">
+              <div>
+                <label for="product-price">Precio (COP) *</label
+                ><input
+                  id="product-price"
+                  name="price"
+                  type="number"
+                  [(ngModel)]="draft.price"
+                  required
+                  min="1"
+                  max="2147483647"
+                  step="1"
+                />
+              </div>
+              <div>
+                <label for="product-stock">Unidades disponibles *</label
+                ><input
+                  id="product-stock"
+                  name="stock"
+                  type="number"
+                  [(ngModel)]="draft.stock"
+                  required
+                  min="0"
+                  max="2147483647"
+                  step="1"
+                />
+              </div>
+            </div>
+            <label for="product-color">Color de fondo</label
+            ><input id="product-color" name="color" type="color" [(ngModel)]="draft.color" />
+            <small
+              >Los precios son enteros en pesos colombianos. Usa 0 unidades para mostrar un producto como
+              agotado.</small
+            >
+            <button
+              type="submit"
+              class="button full"
+              [disabled]="busy() || productForm.invalid || !!photoError() || (!editing() && !photo)"
+            >
+              {{ busy() ? 'Guardando…' : editing() ? 'Guardar cambios' : 'Publicar producto' }}
+            </button>
+          </fieldset>
+        </form>
+      </section>
+      <section class="catalog-list" aria-label="Productos publicados">
+        <div class="heading">
+          <h2>Productos · {{ products().length }}</h2>
+          <button class="text-button" (click)="load()" [disabled]="busy()">Actualizar</button>
+        </div>
+        <label for="admin-search" class="search-label">Buscar producto</label
+        ><input
+          id="admin-search"
+          type="search"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event)"
+          placeholder="Nombre o categoría"
+        />
+        @for (product of filtered(); track product.id) {
+        <article class="admin-product">
+          <div class="thumbnail" [style.background]="product.color"><app-product-image [product]="product" /></div>
+          <div class="product-copy">
+            <small>{{ product.category }}</small>
+            <h3>{{ product.name }}</h3>
+            <strong>{{ product.price | currency:'COP':'$':'1.0-0' }}</strong>
+            <p>{{ product.stock }} unidades disponibles</p>
+          </div>
+          <button
+            class="edit-button"
+            [attr.aria-label]="'Editar ' + product.name"
+            (click)="edit(product)"
+            [disabled]="busy()"
+          >
+            Editar
+          </button>
+        </article>
+        } @empty {
+        <p class="empty">
+          {{ busy() ? 'Cargando catálogo…' : 'No hay productos para mostrar. Crea uno o cambia la búsqueda.' }}
+        </p>
+        }
+      </section>
+    </div>
+  </main>
+  } @else {
+  <main class="admin-shell">
+    <h1>Acceso restringido</h1>
+    <p>Tu cuenta no tiene permisos de administrador para gestionar productos.</p>
+    <p>
+      Para obtener acceso, ejecuta esta consulta en
+      <strong>Supabase Dashboard → SQL Editor</strong>:
+    </p>
+    <pre class="sql-block">UPDATE auth.users SET raw_app_meta_data = jsonb_set(raw_app_meta_data, '{{ '{' }}role{{ '}' }}', '"admin"') WHERE email = 'TU_EMAIL';</pre>
+    <p class="subtitle">
+      Reemplaza <code>TU_EMAIL</code> con el correo de tu cuenta. Luego cierra sesión y vuelve a ingresar.
+    </p>
+    <button class="text-button" (click)="logout()">Cerrar sesión</button>
+    <a routerLink="/tabs/tienda">Ir a la tienda</a>
+  </main>
+  }
+</ion-content>

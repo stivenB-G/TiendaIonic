@@ -1,0 +1,318 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title
+      ><a routerLink="/tabs/tienda" class="brand">nexo<span> / tienda</span></a></ion-title
+    >
+    <a slot="end" class="header-cart" routerLink="/tabs/carrito" aria-label="Ver carrito">
+      <ion-icon name="bag-handle-outline" aria-hidden="true" /> <span>{{ shop.count() }}</span>
+    </a>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <main class="store-shell">
+    @if (auth.demo) {
+    <div class="demo-strip"><span class="dot"></span> Modo demostración · compras simuladas, sin cobros reales</div>
+    } @if (notice()) {
+    <p class="notice" role="status">{{ notice() }}</p>
+    } @if (shop.message()) {
+    <p class="notice" role="status">{{ shop.message() }}</p>
+    } @if (view === 'tienda') {
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">OBJETOS QUE VAN CONTIGO</p>
+        <h1>Lo esencial.<br /><span>A tu manera.</span></h1>
+        <p>Pequeños detalles que hacen mejor tu día. Encuentra tus próximos favoritos en un solo lugar.</p>
+        <a class="button light" href="#catalogo"
+          >Explorar colección <ion-icon name="arrow-forward-outline" aria-hidden="true"
+        /></a>
+        <div class="hero-note">Selección práctica · Precios en pesos colombianos</div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="orbit"></div>
+        <ion-icon class="hero-bag" name="bag-handle-outline" /><span class="art-label">HECHO PARA TU DÍA A DÍA</span>
+      </div>
+    </section>
+    <div class="benefits">
+      <span>01 / Elige tus favoritos</span><span>02 / Confirma tu pedido</span><span>03 / Recoge en tienda</span>
+    </div>
+    <section id="catalogo" class="catalog">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DESCUBRE NEXO</p>
+          <h2>Tu próxima buena elección</h2>
+        </div>
+        <button class="text-button" (click)="refresh()" [disabled]="busy()">Actualizar catálogo</button>
+      </div>
+      <label class="search"
+        ><ion-icon name="search-outline" aria-hidden="true" /><input
+          type="search"
+          placeholder="¿Qué estás buscando?"
+          aria-label="Buscar productos"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+      /></label>
+      <div class="filters" aria-label="Categorías">
+        @for (item of categories(); track item) {<button
+          [class.active]="category() === item"
+          [attr.aria-pressed]="category() === item"
+          (click)="category.set(item)"
+        >
+          {{ item }}</button
+        >}
+      </div>
+      @if (busy() && !shop.ready()) {
+      <p role="status">Cargando productos…</p>
+      }
+      <div class="product-grid">
+        @for (product of filtered(); track product.id) {
+        <article class="product-card">
+          <button
+            class="product-art"
+            [style.background]="product.color"
+            (click)="showProduct(product)"
+            [attr.aria-label]="'Ver detalles de ' + product.name"
+          >
+            <span class="category-tag">{{ product.category }}</span><app-product-image [product]="product" /><span
+              class="detail-hint"
+              >Ver detalles ↗</span
+            >
+          </button>
+          <div class="product-info">
+            <h3><button (click)="showProduct(product)">{{ product.name }}</button></h3>
+            <p>{{ product.description }}</p>
+            <div class="product-bottom">
+              <strong>{{ product.price | currency:'COP':'$':'1.0-0' }}</strong
+              ><button
+                class="add-button"
+                [disabled]="busy() || product.stock < 1"
+                (click)="change(product, 1)"
+                [attr.aria-label]="'Añadir ' + product.name"
+              >
+                <ion-icon name="add-outline" aria-hidden="true" />
+              </button>
+            </div>
+            <small>{{ product.stock > 0 ? product.stock + ' disponibles' : 'Agotado' }}</small>
+          </div>
+        </article>
+        } @empty { @if (shop.ready()) {
+        <p class="empty">No encontramos productos. Prueba otra búsqueda o actualiza el catálogo.</p>
+        } }
+      </div>
+    </section>
+    @if (selected(); as product) {
+    <section id="product-detail" tabindex="-1" class="detail-panel" aria-label="Detalles del producto">
+      <button class="text-button" (click)="selected.set(null)">Cerrar detalles ×</button>
+      <p class="eyebrow">{{ product.category }}</p>
+      <h2>{{ product.name }}</h2>
+      @if (product.image_url) {
+      <div class="detail-image"><app-product-image [product]="product" /></div>
+      }
+      <p>{{ product.description }}</p>
+      <strong>{{ product.price | currency:'COP':'$':'1.0-0' }}</strong>
+      <p>{{ product.stock }} unidades disponibles · Recogida en tienda</p>
+      <button class="button" [disabled]="busy() || product.stock < 1" (click)="change(product, 1)">
+        Añadir al carrito
+      </button>
+    </section>
+    } } @if (view === 'carrito') {
+    <p class="eyebrow">CASI TUYO</p>
+    <h1>Tu carrito<span class="count">{{ shop.count() }}</span></h1>
+    <p class="subtitle">Una buena elección empieza con pequeños detalles.</p>
+    @if (shop.lines().length) {
+    <div class="checkout-layout">
+      <section aria-label="Productos del carrito">
+        @for (line of shop.lines(); track line.product.id) {
+        <article class="cart-line">
+          <div class="mini-art" [style.background]="line.product.color">
+            <app-product-image [product]="line.product" />
+          </div>
+          <div class="line-info">
+            <h2>{{ line.product.name }}</h2>
+            <p>{{ line.product.price | currency:'COP':'$':'1.0-0' }} / unidad</p>
+            <div class="quantity">
+              <button
+                [disabled]="busy()"
+                (click)="change(line.product, -1)"
+                [attr.aria-label]="'Quitar una unidad de ' + line.product.name"
+              >
+                −</button
+              ><span>{{ line.quantity }}</span
+              ><button
+                [disabled]="busy()"
+                (click)="change(line.product, 1)"
+                [attr.aria-label]="'Sumar una unidad de ' + line.product.name"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <strong>{{ line.product.price * line.quantity | currency:'COP':'$':'1.0-0' }}</strong>
+        </article>
+        }
+      </section>
+      <aside class="summary">
+        <h2>Resumen del pedido</h2>
+        <div><span>Productos</span><span>{{ shop.count() }}</span></div>
+        <div><span>Entrega</span><span>Recogida gratuita</span></div>
+        <div class="total"><span>Total</span><strong>{{ shop.total() | currency:'COP':'$':'1.0-0' }}</strong></div>
+        <p>Precios finales en COP. Sin cargos de envío.</p>
+        <p>
+          {{ auth.demo ? 'Se generará un comprobante de prueba. No se realizará ningún cobro.' : 'Reserva tus productos
+          y paga al recoger. El pedido queda pendiente de pago; no solicitamos datos bancarios.' }}
+        </p>
+        @if (auth.user()) {<button class="button full" [disabled]="busy() || !shop.ready()" (click)="checkout()">
+          {{ busy() ? 'Procesando…' : auth.demo ? 'Simular compra' : 'Confirmar pedido' }}</button
+        >} @else {<a class="button full" routerLink="/tabs/cuenta">Inicia sesión para continuar</a>}<a
+          class="continue"
+          routerLink="/tabs/tienda"
+          >Seguir comprando</a
+        >
+      </aside>
+    </div>
+    } @else {
+    <div class="empty">
+      <ion-icon name="bag-handle-outline" aria-hidden="true" />
+      <h2>Hay espacio para algo bueno</h2>
+      <p>Añade tus favoritos y los encontrarás aquí.</p>
+      <a class="button" routerLink="/tabs/tienda">Explorar la tienda</a>
+    </div>
+    } @if (receipt(); as order) {
+    <section class="receipt">
+      <p class="eyebrow">
+        {{ order.payment_status === 'simulated' ? 'COMPROBANTE DE SIMULACIÓN · SIN VALOR FISCAL' : 'CONSTANCIA DE PEDIDO
+        · PAGO PENDIENTE' }}
+      </p>
+      <h2>¡Tu pedido está registrado!</h2>
+      <p>Referencia: {{ order.id }}</p>
+      <p>{{ order.created_at | date:'dd/MM/yyyy HH:mm' }} · {{ order.total | currency:'COP':'$':'1.0-0' }}</p>
+      <a routerLink="/tabs/pedidos" class="button">Ver mis pedidos</a>
+    </section>
+    } } @if (view === 'pedidos') {
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">CONTIGO EN CADA PASO</p>
+        <h1>{{ auth.operator() && !auth.demo ? 'Gestión de pedidos' : 'Mis pedidos' }}</h1>
+      </div>
+      <button class="text-button" (click)="refresh()" [disabled]="busy()">Actualizar</button>
+    </div>
+    <p class="subtitle">Consulta tus compras y el estado de cada entrega.</p>
+    @for (order of shop.orders(); track order.id) {
+    <article class="order-card">
+      <div class="section-heading">
+        <span class="status">{{ status(order) }}</span><small>{{ order.created_at | date:'dd/MM/yyyy HH:mm' }}</small>
+      </div>
+      <h2>Pedido {{ order.id.slice(0, 8).toUpperCase() }}</h2>
+      <p class="reference">Referencia completa: {{ order.id }}</p>
+      @for (item of order.items; track item.productId) {
+      <div class="order-item">
+        <span>{{ item.quantity }} × {{ item.name }}</span
+        ><span>{{ item.price * item.quantity | currency:'COP':'$':'1.0-0' }}</span>
+      </div>
+      }
+      <div class="order-item total">
+        <strong>Total</strong><strong>{{ order.total | currency:'COP':'$':'1.0-0' }}</strong>
+      </div>
+      <p>
+        {{ order.payment_status === 'simulated' ? 'Pago simulado · Sin cobro real · Comprobante sin valor fiscal' :
+        order.payment_status === 'paid' ? 'Pago confirmado por el servidor' : 'Pago pendiente al recoger · Esta
+        constancia no acredita un pago' }}
+      </p>
+      @if (auth.operator()) {
+      <div class="order-actions">
+        <a class="button secondary" [routerLink]="['/tabs/evidencias']" [queryParams]="{ pedido: order.id }"
+          >Fotografiar evidencia</a
+        >@if (order.status !== 'delivered') {<button class="button" (click)="deliver(order)" [disabled]="busy()">
+          {{ auth.demo ? 'Marcar entregado' : 'Confirmar cobro presencial y entrega' }}</button
+        >}
+      </div>
+      }
+    </article>
+    } @empty {
+    <div class="empty">
+      <ion-icon name="receipt-outline" aria-hidden="true" />
+      <h2>{{ busy() ? 'Cargando pedidos…' : 'Tu historia empieza aquí' }}</h2>
+      <p>Cuando confirmes una compra, podrás consultar su estado en esta sección.</p>
+      <a class="button" routerLink="/tabs/tienda">Ir a la tienda</a>
+    </div>
+    } } @if (view === 'cuenta') {
+    <div class="account-layout">
+      <section>
+        <p class="eyebrow">TU ESPACIO EN NEXO</p>
+        <h1>Qué bueno<br />encontrarte aquí.</h1>
+        <p class="subtitle">Tus favoritos, tus pedidos y todo lo que viene.</p>
+        <div class="account-benefit">
+          <ion-icon name="cube-outline" aria-hidden="true" /> Consulta el estado de tus pedidos
+        </div>
+        <div class="account-benefit">
+          <ion-icon name="checkmark-circle-outline" aria-hidden="true" /> Compra con precios claros
+        </div>
+      </section>
+      <section class="account-card">
+        @if (auth.user(); as user) {
+        <p class="eyebrow">SESIÓN ACTIVA</p>
+        <h2>¡Bienvenido!</h2>
+        <p>{{ user.email }}</p>
+        <p>
+          {{ auth.demo ? 'Cuenta de demostración con acceso de prueba a logística.' : auth.operator() ? 'Acceso de
+          logística habilitado.' : 'Cuenta de cliente.' }}
+        </p>
+        <a class="button full" routerLink="/tabs/pedidos">Consultar pedidos</a>@if (auth.operator()) {<a
+          class="continue"
+          routerLink="/tabs/evidencias"
+          >Evidencias de entrega</a
+        >} @if (auth.admin()) { <a class="button full" routerLink="/tabs/admin">Administrar productos</a> } @if
+        (auth.demo && !auth.admin()) {
+        <button class="text-button" (click)="demoAdmin()">Probar administración</button> }
+        <button class="text-button" (click)="logout()">Cerrar sesión</button> } @else if (auth.demo) {
+        <p class="eyebrow">PRUEBA LA EXPERIENCIA</p>
+        <h2>Entra y explora</h2>
+        <p>
+          La tienda funciona en modo demostración. Puedes armar un carrito, simular una compra y registrar evidencias
+          sin crear una cuenta real.
+        </p>
+        <button class="button full" (click)="demoLogin()">Entrar a la demostración</button
+        ><button class="text-button" (click)="demoAdmin()">Probar administración</button
+        ><small>No se solicitan contraseñas ni datos bancarios.</small> } @else {
+        <h2>{{ registering ? 'Crea tu cuenta' : 'Inicia sesión' }}</h2>
+        @if (busy()) {
+        <p class="notice" role="status" style="color: var(--ion-color-warning, #e67e22);">Conectando con el servidor, espera un momento…</p>
+        }
+        <form (ngSubmit)="submitAccount()" #accountForm="ngForm">
+          <label for="email">Correo electrónico</label
+          ><input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            [(ngModel)]="email"
+            required
+            email
+            maxlength="254"
+          /><label for="password">Contraseña</label
+          ><input
+            id="password"
+            name="password"
+            type="password"
+            [autocomplete]="registering ? 'new-password' : 'current-password'"
+            [(ngModel)]="password"
+            required
+            minlength="8"
+            maxlength="128"
+          /><small>Mínimo 8 caracteres. La sesión se mantiene mientras la aplicación esté abierta.</small
+          ><button type="submit" class="button full" [disabled]="busy() || accountForm.invalid">
+            {{ busy() ? 'Conectando…' : registering ? 'Crear cuenta' : 'Ingresar' }}
+          </button>
+        </form>
+        <button class="text-button" (click)="registering = !registering">
+          {{ registering ? 'Ya tengo una cuenta' : 'Quiero crear una cuenta' }}</button
+        >}
+      </section>
+    </div>
+    }
+    <footer>
+      <span class="brand">nexo<span> / tienda</span></span>
+      <p>Cosas simples. Buenas elecciones.</p>
+      <small>{{ auth.demo ? 'Tienda de demostración académica' : 'Recogida en tienda · Pago al recoger' }}</small>
+    </footer>
+  </main>
+</ion-content>
