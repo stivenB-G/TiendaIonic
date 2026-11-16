@@ -63,3 +63,7 @@ En web, Filesystem utiliza almacenamiento del navegador. En Android se utiliza e
 Seguir `docs/GUIA-EVIDENCIAS.md`. Usar `docs/INFORME-BASE.md` como borrador para elaborar el documento APA en un procesador de texto y exportarlo a PDF. Completar los campos y las evidencias reales; el borrador no certifica pruebas pendientes.
 
 Para entregar el código, incluir src, android, configuración, package.json, package-lock.json y README. Omitir node_modules, .git, cachés, android/.gradle, android/local.properties y directorios build. Añadir el informe en PDF según las indicaciones del docente.
+
+---
+
+*Actualizado: 16 de noviembre de 2026*
